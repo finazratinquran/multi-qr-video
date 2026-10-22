@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ad-Free Multi QR Video Manager</title>
+<style>
+:root{--ink:#172033;--muted:#657087;--line:#dce2ec;--accent:#2457d6;--bg:#f4f7fb;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{width:min(1100px,calc(100% - 24px));margin:24px auto}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,28px);margin-bottom:18px;box-shadow:0 10px 28px #17203308}
+h1{font-size:clamp(25px,4vw,34px);margin:0 0 8px}h2{font-size:21px;margin:0 0 14px}.sub,.hint,.muted{color:var(--muted)}.sub{margin:0 0 18px}
+.notice{background:#eef4ff;border-radius:12px;padding:13px 15px;margin:14px 0}.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);gap:22px;align-items:start}
+label{display:block;font-weight:650;margin:13px 0 6px}input,textarea{width:100%;border:1px solid #cbd3e1;border-radius:10px;padding:11px 12px;font:inherit;background:#fff;color:var(--ink)}textarea{min-height:80px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+button,.linkbtn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:var(--accent);color:white}.secondary{background:#e9eef8;color:#1c2b49}.danger{background:#fff0ef;color:var(--danger)}
+.preview{background:#f8faff;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;min-height:260px;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow-wrap:anywhere}
+#qrcode{background:#fff;padding:10px;line-height:0}#qrcode img,#qrcode canvas{max-width:100%;height:auto!important;display:block}
+#status{font-size:14px;color:var(--muted);margin-top:12px;min-height:22px}.hint{font-size:13px;margin-top:6px}
+.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:13px;color:var(--muted)}td small{display:block;max-width:330px;overflow-wrap:anywhere;color:var(--muted)}
+.item-actions{display:flex;gap:6px;flex-wrap:wrap}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.footer{text-align:center;color:var(--muted);font-size:13px;padding:8px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.preview{min-height:220px}}
+</style>
+</head>
+<body><main>
+<section class="panel">
+<h1>Ad-Free Multi QR Video Manager</h1>
+<p class="sub">একটি QR = একটি আলাদা ভিডিও • পরে প্রতিটি ভিডিও আলাদাভাবে বদলানো যাবে • বিজ্ঞাপন নেই</p>
+<div class="notice"><b>কাজের নিয়ম:</b> প্রতিটি ভিডিওর জন্য আলাদা ID দিয়ে QR তৈরি হবে। QR-এ থাকবে <code>redirect.html?id=video-001</code>-এর মতো আলাদা লিংক। সব ভিডিওর গন্তব্য থাকবে <code>videos.json</code> ফাইলে। ভিডিও যোগ/বদলানোর পর <b>Download videos.json</b> করে GitHub repository-তে পুরোনো ফাইলটি replace করে commit করতে হবে। QR আবার বানাতে হবে না।</div>
+<label for="baseUrl">প্রকাশিত redirect.html URL (GitHub Pages URL)</label>
+<input id="baseUrl" placeholder="https://YOUR-USERNAME.github.io/REPOSITORY/redirect.html">
+<div class="hint">GitHub Pages-এ সাইট প্রকাশ করার পর এই URL দিন। শেষে redirect.html থাকবে; প্রশ্নচিহ্ন বা ?id= যোগ করবেন না।</div>
+</section>
+
+<section class="panel">
+<h2 id="formTitle">নতুন ভিডিও ও QR তৈরি করুন</h2>
+<div class="grid">
+<form id="videoForm">
+<label for="videoName">ভিডিওর নাম</label>
+<input id="videoName" required placeholder="যেমন: সূরা আল-বাকারা ক্লাস ১">
+<div class="row">
+<div><label for="videoId">ইউনিক ID</label><input id="videoId" required placeholder="video-001" pattern="[A-Za-z0-9_-]+" title="ইংরেজি অক্ষর, সংখ্যা, - অথবা _ ব্যবহার করুন"></div>
+<div><label for="qrSize">QR সাইজ</label><input id="qrSize" type="number" min="200" max="1000" value="384"></div>
+</div>
+<label for="videoUrl">ভিডিও লিংক</label>
+<textarea id="videoUrl" required placeholder="Google Drive / অন্য ভিডিওর share link"></textarea>
+<div class="hint">Google Drive হলে Share → General access → Anyone with the link → Viewer দিন।</div>
+<div class="buttons">
+<button class="primary" type="submit" id="saveBtn">ভিডিও সেভ ও QR তৈরি</button>
+<button class="secondary" type="button" id="newBtn">নতুন এন্ট্রি</button>
+</div>
+<p class="hint">এন্ট্রিগুলো এই ব্রাউজারে সেভ থাকে। অন্য ডিভাইস/ব্রাউজারে নিলে JSON ফাইল export/import করুন।</p>
+</form>
+<div class="preview"><div id="qrcode"></div><div id="status">ভিডিও যোগ করলে QR এখানে দেখা যাবে।</div><div id="qrUrl" class="hint"></div><div class="buttons"><button class="secondary" type="button" id="downloadQr">বর্তমান QR PNG ডাউনলোড</button></div></div>
+</div>
+</section>
+
+<section class="panel">
+<h2>আপনার ভিডিও ও QR তালিকা</h2>
+<div class="buttons" style="margin-top:0;margin-bottom:14px">
+<button class="primary" id="exportBtn" type="button">Download videos.json</button>
+<button class="secondary" id="exportListBtn" type="button">Backup তালিকা JSON</button>
+<label class="linkbtn secondary" for="importFile">JSON Import করুন</label><input id="importFile" type="file" accept=".json,application/json" hidden>
+</div>
+<p class="hint">ভিডিও লিংক বদলাতে সংশ্লিষ্ট এন্ট্রিতে Edit করুন। একই ID রাখলে পুরোনো QR-ই কাজ করবে। নতুন ভিডিওর জন্য নতুন ID ব্যবহার করুন।</p>
+<div id="entries" class="empty">এখনও কোনো ভিডিও যোগ করা হয়নি।</div>
+</section>
+<p class="footer">QR তৈরির লাইব্রেরি CDN থেকে লোড হয়, তাই QR বানানোর সময় ইন্টারনেট দরকার।</p>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const STORAGE_KEY='multiQrVideoManager.v1';
+let entries=[];
+let editingId=null;
+let currentQrText='';
+try{entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(!Array.isArray(entries))entries=[];}catch(e){entries=[];}
+const savedBase=localStorage.getItem('multiQrVideoManager.baseUrl')||'';
+$('baseUrl').value=savedBase;
+$('baseUrl').addEventListener('change',()=>{localStorage.setItem('multiQrVideoManager.baseUrl',$('baseUrl').value.trim());renderEntries();if(editingId)makePreview(editingId);});
+function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(entries));}
+function baseUrl(){return $('baseUrl').value.trim().replace(/\/+$/,'');}
+function isValidBase(){return /^https?:\/\//i.test(baseUrl()) && /redirect\.html$/i.test(baseUrl().split('?')[0]);}
+function redirectUrl(id){return baseUrl()+'?id='+encodeURIComponent(id);}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function showStatus(s){$('status').textContent=s;}
+function makePreview(id){const item=entries.find(x=>x.id===id);if(!item)return; if(!isValidBase()){showStatus('প্রথমে প্রকাশিত redirect.html URL দিন।');$('qrcode').innerHTML='';$('qrUrl').textContent='';return;}
+if(typeof QRCode==='undefined'){showStatus('QR লাইব্রেরি লোড হয়নি—ইন্টারনেট পরীক্ষা করুন।');return;}
+currentQrText=redirectUrl(item.id);$('qrcode').innerHTML='';new QRCode($('qrcode'),{text:currentQrText,width:Math.max(200,Math.min(1000,Number($('qrSize').value)||384)),height:Math.max(200,Math.min(1000,Number($('qrSize').value)||384)),colorDark:'#111827',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});$('qrUrl').textContent=currentQrText;showStatus('QR তৈরি হয়েছে: '+item.name);}
+function resetForm(){editingId=null;$('videoForm').reset();$('videoId').value='video-'+String(entries.length+1).padStart(3,'0');$('qrSize').value=384;$('formTitle').textContent='নতুন ভিডিও ও QR তৈরি করুন';$('saveBtn').textContent='ভিডিও সেভ ও QR তৈরি';$('qrcode').innerHTML='';$('qrUrl').textContent='';currentQrText='';showStatus('নতুন ভিডিওর তথ্য লিখুন।');}
+function renderEntries(){if(!entries.length){$('entries').className='empty';$('entries').textContent='এখনও কোনো ভিডিও যোগ করা হয়নি।';return;}
+$('entries').className='tablewrap';$('entries').innerHTML='<table><thead><tr><th>ID</th><th>ভিডিও</th><th>ভিডিও লিংক</th><th>কাজ</th></tr></thead><tbody>'+entries.map(e=>'<tr><td><b>'+escapeHtml(e.id)+'</b></td><td>'+escapeHtml(e.name)+'<small>'+(isValidBase()?escapeHtml(redirectUrl(e.id)):'Base URL দিন')+'</small></td><td><small>'+escapeHtml(e.url)+'</small></td><td><div class="item-actions"><button class="secondary" type="button" data-action="edit" data-id="'+escapeHtml(e.id)+'">Edit</button><button class="secondary" type="button" data-action="qr" data-id="'+escapeHtml(e.id)+'">QR দেখুন</button><button class="secondary" type="button" data-action="png" data-id="'+escapeHtml(e.id)+'">PNG</button><button class="danger" type="button" data-action="delete" data-id="'+escapeHtml(e.id)+'">Delete</button></div></td></tr>').join('')+'</tbody></table>';}
+$('videoForm').addEventListener('submit',e=>{e.preventDefault();const name=$('videoName').value.trim(),id=$('videoId').value.trim(),url=$('videoUrl').value.trim();if(!/^https?:\/\//i.test(url)){alert('ভিডিও লিংকটি https:// বা http:// দিয়ে শুরু হতে হবে।');return;}if(!/^[A-Za-z0-9_-]+$/.test(id)){alert('ID-তে শুধু ইংরেজি অক্ষর, সংখ্যা, - এবং _ ব্যবহার করুন।');return;}const duplicate=entries.find(x=>x.id===id&&x.id!==editingId);if(duplicate){alert('এই ID আগে ব্যবহার হয়েছে। অন্য ID দিন, অথবা পুরোনো এন্ট্রি Edit করুন।');return;}const item={id,name,url};if(editingId){entries=entries.map(x=>x.id===editingId?item:x);}else{entries.push(item);}persist();renderEntries();makePreview(id);$('formTitle').textContent='ভিডিও সেভ হয়েছে';$('saveBtn').textContent='পরিবর্তন সেভ করুন';editingId=id;});
+$('newBtn').addEventListener('click',resetForm);
+$('entries').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=b.dataset.id,act=b.dataset.action,item=entries.find(x=>x.id===id);if(!item)return;
+if(act==='edit'){editingId=id;$('videoName').value=item.name;$('videoId').value=item.id;$('videoUrl').value=item.url;$('formTitle').textContent='ভিডিও Edit করুন (ID একই রাখলে QR একই থাকবে)';$('saveBtn').textContent='পরিবর্তন সেভ করুন';makePreview(id);window.scrollTo({top:0,behavior:'smooth'});}
+if(act==='qr'){ $('videoId').value=item.id;makePreview(id);window.scrollTo({top:0,behavior:'smooth'});}
+if(act==='png'){makePreview(id);setTimeout(()=>downloadQrFile(id),180);}
+if(act==='delete'){if(confirm('এই ভিডিও এন্ট্রি মুছে ফেলবেন? videos.json আবার export করে GitHub-এ publish করতে হবে।')){entries=entries.filter(x=>x.id!==id);persist();renderEntries();if(editingId===id)resetForm();}}
+});
+function downloadText(filename,text,mime='application/json'){const blob=new Blob([text],{type:mime});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+$('exportBtn').addEventListener('click',()=>{const map={};entries.forEach(e=>map[e.id]=e.url);downloadText('videos.json',JSON.stringify(map,null,2));});
+$('exportListBtn').addEventListener('click',()=>downloadText('video-qr-backup.json',JSON.stringify(entries,null,2)));
+function downloadQrFile(id){const holder=$('qrcode'),canvas=holder.querySelector('canvas'),img=holder.querySelector('img');let data=canvas?canvas.toDataURL('image/png'):img?.src;if(!data){showStatus('আগে QR তৈরি করুন।');return;}const a=document.createElement('a');a.href=data;a.download='QR-'+id+'.png';a.click();}
+$('downloadQr').addEventListener('click',()=>{if(!currentQrText){showStatus('আগে একটি ভিডিওর QR তৈরি করুন।');return;}const item=entries.find(x=>redirectUrl(x.id)===currentQrText);downloadQrFile(item?.id||'video');});
+$('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());let incoming=[];if(Array.isArray(data)){incoming=data;}else if(data&&typeof data==='object'){incoming=Object.entries(data).map(([id,url])=>({id,name:id,url}));}if(!incoming.every(x=>x&&/^[A-Za-z0-9_-]+$/.test(String(x.id||''))&&/^https?:\/\//i.test(String(x.url||''))))throw new Error('invalid');const merged=new Map(entries.map(x=>[x.id,x]));incoming.forEach(x=>merged.set(String(x.id),{id:String(x.id),name:String(x.name||x.id),url:String(x.url)}));entries=[...merged.values()];persist();renderEntries();alert('Import হয়েছে। প্রয়োজন হলে Download videos.json করে GitHub-এ আপলোড করুন।');}catch(err){alert('JSON ফাইলটি সঠিক নয়। Backup JSON বা videos.json ব্যবহার করুন।');}e.target.value='';});
+renderEntries();resetForm();
+</script></body></html>

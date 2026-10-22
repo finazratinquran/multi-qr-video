@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ভিডিও খোলা হচ্ছে…</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;margin:3rem auto;padding:0 1rem;max-width:620px;color:#172033}a{overflow-wrap:anywhere}.muted{color:#657087}</style>
+</head>
+<body>
+<h2>ভিডিও খোলা হচ্ছে…</h2>
+<p id="message">আপনার ভিডিওর লিংক খোঁজা হচ্ছে।</p>
+<p id="fallback"></p>
+<script>
+(async()=>{
+ const id=new URLSearchParams(location.search).get('id');
+ const msg=document.getElementById('message'),fb=document.getElementById('fallback');
+ if(!id){msg.textContent='এই QR লিংকে ভিডিও ID নেই।';return;}
+ try{
+   const response=await fetch('./videos.json?v='+Date.now(),{cache:'no-store'});
+   if(!response.ok)throw new Error('videos.json পাওয়া যায়নি');
+   const videos=await response.json();
+   const url=videos[id];
+   if(typeof url!=='string'||!/^https?:\/\//i.test(url))throw new Error('এই ID-এর ভিডিও লিংক পাওয়া যায়নি');
+   msg.textContent='ভিডিওতে নেওয়া হচ্ছে…';
+   const a=document.createElement('a');a.href=url;a.textContent='স্বয়ংক্রিয়ভাবে না খুললে এখানে চাপ দিন';fb.appendChild(a);
+   location.replace(url);
+ }catch(err){
+   msg.textContent='ভিডিও খোলা যায়নি। videos.json ফাইলটি GitHub Pages-এ আছে কি না এবং এই ID-টি তাতে যোগ করা আছে কি না দেখুন।';
+   const a=document.createElement('a');a.href='./index.html';a.textContent='QR Manager খুলুন';fb.appendChild(a);
+ }
+})();
+</script>
+<noscript>এই পেজ চালাতে JavaScript চালু থাকতে হবে।</noscript>
+</body></html>
